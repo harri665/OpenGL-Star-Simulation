@@ -1,44 +1,57 @@
-to run run final.exe 
-or run make then then run final.exe
+# OpenGL Star Simulation
 
-This is a simulation of a star using real data as simular to this project done in Houdini ( [Here](https://harrison-martin.com/#/projects/8Bvxdn))
+A GPU-accelerated particle simulation of a star, driven by **real velocity-field data** (exported from a VDB workflow). Particles are advected through the vector field and rendered in real time with interactive camera controls, trails, and tuning parameters.
 
-i opted to use a vector field stored in a vdb as this is something i aimed to better understand. To impliment VDB it would require using alote more than the scope of this project and likely would not be able to run on yoru computer. The VDB files are converted to bin files so they fall within the scope of this project. 
+![OpenGL Star Simulation screenshot](15be0b55fa4e7580-Screenshot_2026-04-27_193558.png)
 
-Colors: 
-the colors range in a blackbody from red to blue and represent velocity if a particle is blue its moving very fash and red if its moving very slow. 
+## Overview
 
-FOR A BETTER RESULT INCREASE THE MAX AMOUNT OF PARTICLES to as high as your computer can handle. 
+This project visualizes a star-like flow using a precomputed **vector field** (originating from VDB data). Instead of integrating OpenVDB directly (out of scope for this project), the vector field is converted into a lightweight binary format and sampled at runtime to drive particle motion.
 
-Controls: 
+Related project inspiration/demo (Houdini workflow):  
+https://harrison-martin.com/#/projects/8Bvxdn
 
-Mouse:  to move camera - Drag zoom etc ... 
+## Visual encoding
 
-SPACE: will pause/play the simulation
+- Color is mapped along a **blackbody-style gradient** from red → blue
+- Color represents **particle speed**:
+  - **Blue** = faster
+  - **Red** = slower
 
-TILT: DEPRECATED
+## Run
 
-, and . : will increase and decrease the field strength respectively
+### Option A (Windows)
+Run:
+- `final.exe`
 
-### 1 and 2: will increase and decrease the MAX amount of particles becuase the emission rate is so high by 
-default this is basically the same as increasing the emission rate. 
+### Option B (Build from source)
+```bash
+make
+./final.exe
+```
 
-3 and 4: will Increase the emission rate this should only be used if you have a really good computer
+> Tip: For a denser / more impressive result, increase the maximum particle count as high as your machine can handle.
 
-7 and 8 Will increase and decrease the star radius - this is fun to test and see how the vector field reacts to different sized stars. ( NOT ACCURATE to real life just fun to play with)
+## Controls
 
-9, 0 mostly for testing resizes the vector veclocity field 
+- **Mouse**: orbit / pan / zoom camera
+- **Space**: pause / resume simulation
+- **,** / **.**: decrease / increase field strength
+- **1** / **2**: decrease / increase max particles (acts like higher emission because emission is high by default)
+- **3** / **4**: decrease / increase emission rate (use carefully)
+- **5** / **6**: adjust trail length (mostly for testing)
+- **7** / **8**: decrease / increase star radius (for experimentation; not physically accurate)
+- **9** / **0**: resize the vector velocity field (testing)
+- **U**: toggle velocity vector display (shows the underlying field direction)
+- **T**: toggle particle trails
+- **B**: show full particle path since spawn (when trails are enabled)
+- **R**: reset particles
+- **ESC** / **Q**: quit immediately (useful if you push settings too far)
 
-V DEPRECATED 
+## Notes
 
-### U: Toggle the velocity vector display shows the VDB velocity vector
+- Some controls/features are marked deprecated in the original project notes and may not have an effect depending on build/version.
 
-### T: toggle particle trails on or off 
+---
 
- 5 and 6: lets you control the length of the particle trails (MOSTLY FOR TESTING )
-
-### B: IF particle trails are enable this will set the length to be from when that specific particle was spawned so you can see the entire path it took. 
-
-### R: will reset all the particles 
-
-### ESC/Q will kill the program VERY usefull if you increase the simulation beyond your computers limits 
+**Author:** Harrison (`harri665`)
