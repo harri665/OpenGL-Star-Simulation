@@ -1,57 +1,72 @@
 # OpenGL Star Simulation
 
-A GPU-accelerated particle simulation of a star, driven by **real velocity-field data** (exported from a VDB workflow). Particles are advected through the vector field and rendered in real time with interactive camera controls, trails, and tuning parameters.
+A real-time particle visualisation of a neutron star's magnetic field. Particles are advected on the GPU with OpenCL, through either a velocity field converted from Houdini VDB data (NASA IXPE observations, via LASP) or an analytic tilted magnetic dipole, and rendered with OpenGL.
 
-![OpenGL Star Simulation screenshot](15be0b55fa4e7580-Screenshot_2026-04-27_193558.png)
+![Particles streaming around the star](docs/star-sim.webp)
 
-## Overview
+## Features
 
-This project visualizes a star-like flow using a precomputed **vector field** (originating from VDB data). Instead of integrating OpenVDB directly (out of scope for this project), the vector field is converted into a lightweight binary format and sampled at runtime to drive particle motion.
+- OpenCL particle integration, with up to 2M particle slots
+- Two field modes: sampled VDB-derived velocity frames, or an analytic dipole with Lorentz-force motion
+- Speed-coloured particles (red slow, blue fast), optional trails, field-line and velocity-vector debug views
+- Runtime controls for field strength, dipole tilt, emission, particle count and star radius
+- Python converter from `.vdb` to a dependency-free binary grid
 
-Related project inspiration/demo (Houdini workflow):  
-https://harrison-martin.com/#/projects/8Bvxdn
+## Build
 
-## Visual encoding
+Requires a C compiler, OpenGL, (free)GLUT and an OpenCL runtime (NVIDIA, AMD and Intel drivers include one). The OpenCL headers are bundled in `CL/`.
 
-- Color is mapped along a **blackbody-style gradient** from red → blue
-- Color represents **particle speed**:
-  - **Blue** = faster
-  - **Red** = slower
-
-## Run
-
-### Option A (Windows)
-Run:
-- `final.exe`
-
-### Option B (Build from source)
 ```bash
 make
-./final.exe
+./final
 ```
 
-> Tip: For a denser / more impressive result, increase the maximum particle count as high as your machine can handle.
+On Windows, build from an MSYS2 MinGW shell with freeglut and the OpenCL ICD loader installed (`pacman -S mingw-w64-x86_64-freeglut mingw-w64-x86_64-opencl-icd`). On macOS, the Makefile uses the system GLUT, OpenGL and OpenCL frameworks.
+
+## Data
+
+Without data, the simulation uses the analytic dipole field. To drive it with a VDB velocity sequence:
+
+1. Put the Houdini `.vdb` frames in `v1/`, named `untitled.VelocityField_v1.0001.vdb`, `…0002.vdb`, and so on.
+2. Convert them (requires Python with `numpy` and OpenVDB bindings, for example `conda install -c conda-forge openvdb`):
+
+   ```bash
+   python convert_vdb_to_bin.py
+   ```
+
+   This writes a `.bin` next to each `.vdb`: a header (`GRID`, version, dimensions, voxel size, origin) followed by a dense `float32` xyz velocity array.
+3. Run `./final`. It loads the next frame each rendered frame and loops after frame 1000.
 
 ## Controls
 
-- **Mouse**: orbit / pan / zoom camera
-- **Space**: pause / resume simulation
-- **,** / **.**: decrease / increase field strength
-- **1** / **2**: decrease / increase max particles (acts like higher emission because emission is high by default)
-- **3** / **4**: decrease / increase emission rate (use carefully)
-- **5** / **6**: adjust trail length (mostly for testing)
-- **7** / **8**: decrease / increase star radius (for experimentation; not physically accurate)
-- **9** / **0**: resize the vector velocity field (testing)
-- **U**: toggle velocity vector display (shows the underlying field direction)
-- **T**: toggle particle trails
-- **B**: show full particle path since spawn (when trails are enabled)
-- **R**: reset particles
-- **ESC** / **Q**: quit immediately (useful if you push settings too far)
+| input | action |
+|---|---|
+| mouse drag | rotate the camera |
+| mouse wheel, `+` / `-` | zoom |
+| Space | pause / resume |
+| `[` / `]` | dipole tilt −/+ 5° |
+| `,` / `.` | field strength ×0.9 / ×1.1 |
+| `1` / `2` | max particles −/+ 500 |
+| `3` / `4` | emission −/+ 50 per second |
+| `5` / `6` | trail length −/+ |
+| `7` / `8` | star radius −/+ 0.1 |
+| `9` / `0` | grid scale ×0.9 / ×1.1 |
+| `T` | toggle trails |
+| `B` | trails from birth position |
+| `V` | toggle field lines |
+| `U` | toggle velocity vectors |
+| `R` | reset particles |
+| Esc / `Q` | quit |
 
-## Notes
+## Performance
 
-- Some controls/features are marked deprecated in the original project notes and may not have an effect depending on build/version.
+The frame rate is currently limited by data movement, not the GPU. Each frame reads all 2M particle slots back from OpenCL (about 88 MB) and draws them with immediate-mode OpenGL on the CPU, and in data mode it also reads the next grid frame from disk. Sharing the particle buffer between OpenCL and OpenGL (`clCreateFromGLBuffer`) and dispatching over live particles only are the planned fixes.
 
----
+## Contributing
 
-**Author:** Harrison (`harri665`)
+Issues and pull requests are welcome, especially the performance work above, and trilinear sampling of the velocity grid (it currently uses the nearest voxel).
+
+## Related
+
+- The offline Houdini version of this visualisation: [IXPE Data Visualization](https://art.harrison-martin.com/8Bvxdn)
+- Write-up: [A Neutron Star's Magnetic Field in Real Time](https://blog.harrison-martin.com/neutron-star-fields)
